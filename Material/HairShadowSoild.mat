@@ -1,0 +1,118 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: HairShadowSoild
+  m_Shader: {fileID: 4800000, guid: 0120470797e96ca42b19bc06797ebaeb, type: 3}
+  m_ShaderKeywords: _IsFace
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _AlphaTexture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OutlineZOffsetMaskTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OverrideLightNormal:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RampTexture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SpeculiarMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - _AdditionalLightIgnoreCelShade: 0.9
+    - _CelShadeMidPoint: -0.5
+    - _CelShadeMixer: 1
+    - _CelShadeSmoothness: 0.1
+    - _CelShadeSoftness: 0.05
+    - _Cutoff: 0.5
+    - _DirectLightMultiplier: 0.25
+    - _DoLightWithNormalDirection: 0
+    - _EmissionMulByBaseColor: 0
+    - _HairShadowDistace: 1
+    - _HeightCorrectMax: 1.6
+    - _HeightCorrectMin: 1.51
+    - _IndirectLightMultiplier: 1
+    - _IsFace: 1
+    - _LerpBaseNormalOrOverrideNormal: 0
+    - _LightWithNormalHeighten: 0.5
+    - _MainLightIgnoreCelShade: 0
+    - _OcclusionDirectStrength: 0.75
+    - _OcclusionIndirectStrength: 0.5
+    - _OcclusionRemapEnd: 1
+    - _OcclusionRemapStart: 0
+    - _OcclusionStrength: 1
+    - _OutLineThickness: 0.5
+    - _OutlineWidth: 1
+    - _OutlineZOffset: 0.0001
+    - _OutlineZOffsetMaskRemapEnd: 1
+    - _OutlineZOffsetMaskRemapStart: 0
+    - _RampTextureMappingAmount: 1
+    - _RampTextureMappingClamp: 1
+    - _ReceiveShadowMappingAmount: 0.5
+    - _ReceiveShadowMappingPosOffset: 0.5
+    - _RimMax: 1
+    - _RimMin: 0
+    - _RimMisIntensity: 0
+    - _RimSmooth: 0
+    - _RimSmoothness: 10
+    - _RimStrength: 0.1
+    - _ShadowAlpha: 0
+    - _ShadowAutoAdjustByLight: 1
+    - _ShadowRampLerp: 0
+    - _SpecularIntensity: 0.5
+    - _SpecularShininess: 0.5
+    - _UseAlphaClipping: 0
+    - _UseColor: 0
+    - _UseEmission: 0
+    - _UseOcclusion: 0
+    - _WithTextureSample: 0
+    m_Colors:
+    - _BaseColor: {r: 0, g: 0.65999997, b: 0.73, a: 1}
+    - _BrightColor: {r: 1, g: 1, b: 1, a: 1}
+    - _DarkColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    - _DarkShadowRampColor: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _EmissionMapChannelMask: {r: 1, g: 1, b: 1, a: 0}
+    - _IndirectLightMinColor: {r: 0.09999997, g: 0.09999997, b: 0.09999997, a: 1}
+    - _LightShadowRampColor: {r: 1, g: 1, b: 1, a: 1}
+    - _MiddleColor: {r: 0.8, g: 0.1, b: 0.1, a: 1}
+    - _MidstShadowRampColor: {r: 1, g: 1, b: 1, a: 1}
+    - _OcclusionMapChannelMask: {r: 1, g: 0, b: 0, a: 0}
+    - _OutLineColor: {r: 0, g: 0, b: 0, a: 1}
+    - _OutlineColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    - _RimColor: {r: 1, g: 1, b: 1, a: 1}
+    - _ShadowColor: {r: 0, g: 0, b: 0, a: 0}
+    - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
