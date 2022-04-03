@@ -1,1 +1,1 @@
-From NiloCat URP Shader.
+Base framework from ColinLeung-NiloCat/UnityURPToonLitShaderExample.
