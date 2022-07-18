@@ -1,98 +1,105 @@
 ﻿Shader "imgRenkoURPToonShaderFramework/PostProcessing/FlatImage"
-{
-    Properties
+{    Properties
     {
-        // 基础纹理
-        _MainTex("Base (RGB)", 2D) = "white" { }
-        // 亮度
-        _Brightness("Brightness", Float) = 1
-        // 饱和度
-        _Saturation("Saturation", Float) = 1
-        // 对比度
-        _Contrast("Contrast", Float) = 1
-    }
-        SubShader
-    {
-        Tags { "RenderPipeline" = "UniversalPipeline" }
-
-        HLSLINCLUDE
-        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-
-        CBUFFER_START(UnityPerMaterial)
-        float4 _MainTex_ST;
-        half _Brightness;
-        half _Saturation;
-        half _Contrast;
-        CBUFFER_END
-
-        ENDHLSL
-
-        Pass
+        [HideInInspector] _MainTex("Albedo (RGB)", 2D) = "white" {}
+        _brightness("Brightness", Range(0,1)) = 0.5
+        _saturate("Saturate", Range(0,1)) = 0.0
+        _contranst("Constrast", Range(-1,2)) = 0.0
+        _target("Target", Vector) = (-1,1,1,1)
+   _center("Center", Vector) = (0.5,0.5,1,1)
+        _color1("Color 1", Color) = (1,1,1,1)
+        _color2("Color 2", Color) = (1,1,1,1)
+        _lerpAmouth("Lerp Amouth", Range(-1,1)) = 1
+         _lerpAlpha("Lerp Alpha", Range(0,1)) = 1
+        _SmoothStep("_Smooth Step", Range(0,4)) = 1
+}
+SubShader
         {
-            // 开启深度测试 关闭剔除 关闭深度写入
-            ZTest Always Cull Off ZWrite Off
+            Tags
+            {
+                "RenderPipeline" = "UniversalRenderPipeline"
+            }
+           
+            pass
+            {
+                Cull Off
+                ZWrite Off
+                ZTest Always
 
-            HLSLPROGRAM
+                HLSLPROGRAM
+                #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+                CBUFFER_START(UnityPerMaterial)
+                float _brightness;
+                float _saturate;
+                float _contranst;
+                float4 _color1;
+                float4 _color2;
+                float _lerpAmouth;
+                float _lerpAlpha;
+                float2 _target;
+                float2 _center;
 
-            #pragma vertex vert
-            #pragma fragment frag
+                float _SmoothStep;
 
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+                CBUFFER_END
+                TEXTURE2D(_MainTex);
+                SAMPLER(sampler_MainTex);
+                struct a2v {
+                    float4 positionOS:POSITION;
+                    float2 texcoord:TEXCOORD;
+                };
+                struct v2f
+                {
+                    float4 positionCS:SV_POSITION;
+                    float2 texcoord:TEXCOORD;
+                };
+                #pragma vertex Vert
+                #pragma fragment Frag
+                float getPointLineDist (float2 p,float2 lp,float2 ln){
+                    float dist;
+                    float2 p2p = p - lp;
+                    dist = length (dot(p,ln) * ln/length(ln) -p2p);
+                    return dist;
+                }
 
-            // 声明纹理
-            TEXTURE2D(_MainTex);
-        // 声明采样器
-        SAMPLER(sampler_MainTex);
+                v2f Vert(a2v i)
+                {
+                    v2f o;
+                    o.positionCS = TransformObjectToHClip(i.positionOS.xyz);
+                    o.texcoord = i.texcoord;
+                    return o;
+                }
+                float4 Frag(v2f i) :SV_TARGET
+                {
+                    float4 tex = SAMPLE_TEXTURE2D(_MainTex,sampler_MainTex,i.texcoord);
+                    float gray = 0.21 * tex.x + 0.72 * tex.y + 0.072 * tex.z;
+                    tex.xyz *= _brightness;
+                    tex.xyz = lerp(float3(gray,gray,gray), tex.xyz, _saturate);
+                    tex.xyz = lerp(float3(0.5,0.5,0.5), tex.xyz, _contranst);
 
-        struct a2v
-        {
-            float4 vertex: POSITION;
+                    float2 p = i.texcoord;
+                    float2 lp = _center;
+                    float2 ln = _target;
+                    float pld = getPointLineDist (p,lp,ln);
+                    float max_pld = getPointLineDist(float2(0,0), lp, ln);
+                    float dp = pld / max_pld * _lerpAmouth;
+                   // float2 rotated_normal = normalize(_rotated);
+                    float4 lerptex = lerp(_color1, _color2, dp) * _lerpAlpha;
+                   
 
-            float4 texcoord: TEXCOORD0;
-        };
+                    float4 rotatedTex= lerptex;
+                       // 1 - ((1 - tex) * (1 - lerptex * (1.5-i.texcoord.y) * _lerpAlpha));
+                    float4 PicA = tex;
+                    float4 PicB = rotatedTex;
+                    float4 A  = PicA *(PicB + 0.5);
+                    float4 B =1- ((1- PicA)*(1-(PicB - 0.5)));
+                    
+                    return lerp(A,B,step(0.5, PicB));//tex + lerptex;
+                }
+                ENDHLSL
+            }
 
-        struct v2f
-        {
-            float4 pos: SV_POSITION;
-            half2 uv: TEXCOORD0;
-        };
-
-        v2f vert(a2v v)
-        {
-            v2f o;
-
-            o.pos = TransformObjectToHClip(v.vertex.xyz);
-
-            o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
-
-            return o;
+        
         }
-
-        half4 frag(v2f i) : SV_Target
-        {
-            // 纹理采样
-            half4 renderTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
-
-            // 调整亮度 = 原颜色 * 亮度值
-            half3 finalColor = renderTex.rgb * _Brightness;
-
-            // 调整饱和度
-            // 亮度值（饱和度为0的颜色） = 每个颜色分量 * 特定系数
-            half luminance = 0.2125 * renderTex.r + 0.7154 * renderTex.g + 0.0721 * renderTex.b;
-            half3 luminanceColor = half3(luminance, luminance, luminance);
-            // 插值亮度值和原图
-            finalColor = lerp(luminanceColor, finalColor, _Saturation);
-
-            // 调整对比度
-            // 对比度为0的颜色
-            half3 avgColor = half3(0.5, 0.5, 0.5);
-            finalColor = lerp(avgColor, finalColor, _Contrast);
-
-            return half4(finalColor, renderTex.a);
-        }
-        ENDHLSL
-    }
-    }
-
-        Fallback Off
+       
 }

@@ -42,8 +42,9 @@ Shader "imgRenkoURPToonShaderFramework/imgRenkoURPToonShaderFramework(Outline)"
         _FresnelMask("_FresnelMask", Range(0,1)) = 0
         _FresnelMin("_FresnelMin", Range(0,32)) = 1
         _RimColor("_RimColor", Color) = (1,1,1,1) 
+         _RimScale("_RimScale", Range(0,32)) = 1
         _OffsetMul("_RimWidth", Range(0, 0.7)) = 0.012
-        _Threshold("_Threshold", Range(0, 3)) = 0.09
+        _Threshold("_Threshold", Range(0, 10)) = 0.09
         [Header(Normal)]
         [MainTexture]_OverrideLightNormal("_OverrideLightNormal", 2D) = "bump" {}
         _LerpBaseNormalOrOverrideNormal("_LerpBaseNormalOrOverrideNormal", Range(0,1)) = 0
@@ -91,6 +92,7 @@ Shader "imgRenkoURPToonShaderFramework/imgRenkoURPToonShaderFramework(Outline)"
         [MainTexture]_SDF_Sample("_SDF_Sample", 2D) = "white" {}
         _LerpMax("_LerpMax", Range(0, 0.01)) = 0
          _FlipFrom("_FlipFrom", Range(0, 1)) = 1
+     [Toggle(_UseSymmetrySDFFaceShadow)] _UseSymmetrySDFFaceShadow("_UseSymmetrySDFFaceShadow", Range(0.0, 1.0)) = 0.0
 
         [Header(Diffuse Ramp)]
         [MainTexture]_RampTexture("_RampTexture", 2D) = "white" {}
@@ -100,9 +102,15 @@ Shader "imgRenkoURPToonShaderFramework/imgRenkoURPToonShaderFramework(Outline)"
         _MidstShadowRampColor("_MidstShadowRampColor", Color) = (1,1,1,1)
         _DarkShadowRampColor("_DarkShadowRampColor", Color) = (1,1,1,1)
         [Header(Outline)]
+      
         _OutlineWidth("_OutlineWidth (World Space)", Range(0,4)) = 1
+        _OutlinePaintedWidth("_OutlineWidth (Paint Tool Weight)", Range(0,1)) = 1
+
         _OutlineColor("_OutlineColor", Color) = (0.5,0.5,0.5,1)
+        _OutlinePaintedColor("_OutlineColor (Paint Tool Weight)", Range(0,1)) = 1
+           _OutlineOriginalSurfaceColorMixer("_OutlineOriginalSurfaceColorMixer", Range(0,1)) = 1
         _OutlineZOffset("_OutlineZOffset (View Space)", Range(0,1)) = 0.0001
+         _OutlineForTangentOrNormal("_OutlineForTangentOrNormal", Range(0,1)) = 1
         [NoScaleOffset]_OutlineZOffsetMaskTex("_OutlineZOffsetMask (black is apply ZOffset)", 2D) = "black" {}
         _OutlineZOffsetMaskRemapStart("_OutlineZOffsetMaskRemapStart", Range(0,1)) = 0
         _OutlineZOffsetMaskRemapEnd("_OutlineZOffsetMaskRemapEnd", Range(0,1)) = 1
@@ -140,7 +148,7 @@ Shader "imgRenkoURPToonShaderFramework/imgRenkoURPToonShaderFramework(Outline)"
             ZTest LEqual
             ZWrite On
             Blend One Zero
-
+           
             HLSLPROGRAM
 
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
@@ -161,6 +169,7 @@ Shader "imgRenkoURPToonShaderFramework/imgRenkoURPToonShaderFramework(Outline)"
         }
         Pass
         {
+        
             Name "BaseCel"
             Tags { "LightMode" = "HairShadow" }
             Blend DstColor Zero
@@ -169,7 +178,7 @@ Shader "imgRenkoURPToonShaderFramework/imgRenkoURPToonShaderFramework(Outline)"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl"
             #include "imgRenkoURPToonShaderFramework_Shared.hlsl"
-
+        
             #pragma vertex HairVert
             #pragma fragment HairFragment
             #pragma shader_feature _IsFaceShadow
@@ -226,6 +235,7 @@ Shader "imgRenkoURPToonShaderFramework/imgRenkoURPToonShaderFramework(Outline)"
             Tags{"LightMode" = "RimLight"}
 
             Cull Back
+        
             ZTest LEqual
             ZWrite On
             Blend DstColor One
@@ -237,7 +247,8 @@ Shader "imgRenkoURPToonShaderFramework/imgRenkoURPToonShaderFramework(Outline)"
             #pragma multi_compile _ _USERIMLIGHT_ON
             // because it is a ShadowCaster pass, define "ToonShaderApplyShadowBiasFix" to inject "remove shadow mapping artifact" code into VertexShaderWork()
 
-
+            // about this shader logic must be saved in the documents.
+            
             // all shader logic written inside this .hlsl, remember to write all #define BEFORE writing #include
             #include "imgRenkoURPToonShaderFramework_Shared.hlsl"
 

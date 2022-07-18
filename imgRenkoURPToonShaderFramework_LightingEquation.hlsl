@@ -87,15 +87,15 @@ half3 GetLightAttenuation(Light light,half NoL,bool isAdditionalLight){
     // additional light reduce intensity since it is additive
      #if _UseSDFFaceShadow
         float isSahdow = 0;
-        //这张阈值图代表的是阴影在灯光从正前方移动到左后方的变化
-        half4 ilmTex = tex2D(_SDF_Sample, surfaceData.uv);
-
+        //这张阈值图代表的是阴影在灯光从正前方移动到左后方的变化,
+        // Start From Some UV Position.
+        half4 ilmTex = tex2D(_SDF_Sample,surfaceData.uv);
+     
         if (ilmTex.g == 1)
             return saturate(light.color) * lightAttenuationRGB * (isAdditionalLight ? 0.25 : 1) ;
-
         //这张阈值图代表的是阴影在灯光从正前方移动到右后方的变化
-        half4 r_ilmTex = tex2D(_SDF_Sample, float2(_FlipFrom - surfaceData.uv.x, surfaceData.uv.y)) ;
-
+        half4 r_ilmTex = tex2D(_SDF_Sample, float2(_FlipFrom -  surfaceData.uv.x, surfaceData.uv.y));
+ 
         float2 Left = normalize(TransformObjectToWorldDir(float3(1, 0, 0)).xz);	//世界空间角色正左侧方向向量
         float2 Front = normalize(TransformObjectToWorldDir(float3(0, 0, 1)).xz);	//世界空间角色正前方向向量
         float2 LightDir = normalize(light.direction.xz);
@@ -103,7 +103,7 @@ half3 GetLightAttenuation(Light light,half NoL,bool isAdditionalLight){
         float ilm = dot(LightDir, Left) < 0 ? ilmTex.r : r_ilmTex.r;//确定采样的贴图
         //ctrl值越大代表越远离灯光，所以阴影面积会更大，光亮的部分会减少-阈值要大一点，所以ctrl=阈值
         //ctrl大于采样，说明是阴影点
-        isSahdow = step(ilm, ctrl);
+        isSahdow = step(ilm, ctrl);  
         float bias = smoothstep(0, _LerpMax, abs(ctrl - ilm));//平滑边界
         float diffuse = 1;
         if (ctrl > 0.99 || isSahdow == 1)

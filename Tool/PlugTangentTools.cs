@@ -6,6 +6,7 @@ namespace imgRenkoRenderFrameWork
 {
     [Serializable]
     public class TArray {
+        public string Name;
         public Vector4[] tangentsList;
     }
     [Serializable]
@@ -27,6 +28,7 @@ namespace imgRenkoRenderFrameWork
             {
                 Mesh mesh = meshFilter.sharedMesh;
                 TArray t = new TArray();
+                t.Name = meshFilter.gameObject.name;
                 t.tangentsList = WirteAverageNormalToTangent(mesh);
                 _TangentsList.Add(t);
             }
@@ -35,6 +37,7 @@ namespace imgRenkoRenderFrameWork
             {
                 Mesh mesh = skinMeshRender.sharedMesh;
                 TArray t = new TArray();
+                t.Name = skinMeshRender.gameObject.name;
                 t.tangentsList = WirteAverageNormalToTangent(mesh);
                 _TangentsList.Add(t);
             }

@@ -58,7 +58,7 @@ public class CelHairShadow : ScriptableRendererFeature
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
          
-
+            // 生成绘图设置(shader标签,渲染数据)
             var draw2 = CreateDrawingSettings(shaderTag, ref renderingData, renderingData.cameraData.defaultOpaqueSortFlags);
             draw2.overrideMaterial = setting.material;
             draw2.overrideMaterialPassIndex = 0;

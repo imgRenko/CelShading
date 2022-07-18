@@ -23,6 +23,7 @@ struct Attributes
     half3 normalOS      : NORMAL;
     half4 tangentOS     : TANGENT;
     float2 uv           : TEXCOORD0;
+    float4 vertColor    : COLOR;
 };
 
 // all pass will share this Varyings struct (define data needed from our vertex shader to our fragment shader)
@@ -35,7 +36,7 @@ struct Varyings
     float3 tangentWS                : TEXCOORD3;
     half3 binormal                  : TEXCOORD4;
     half2 uv_BumpTex                : TEXCOORD5;
-   
+   float4 vertColor                 : COLOR;
 };
 
 struct VaryingsRim
@@ -47,6 +48,7 @@ struct VaryingsRim
     half3 positionVS        : TEXCOORD3;
     half4 positionNDC       : TEXCOORD4;
     half3 positionWS        : TEXCOORD5;
+     half2 uv               : TEXCOORD6;
 };
 // for hair shadow
  struct ShadowHairVert
@@ -152,6 +154,7 @@ CBUFFER_START(UnityPerMaterial)
     half    _ShadowRampLerp;
     half    _UseRimLight;
     half4   _RimColor;
+    float _RimScale;
     half   _FresnelMask;
     half    _FresnelMin;
     half    _OffsetMul;
@@ -203,10 +206,14 @@ CBUFFER_START(UnityPerMaterial)
     float4 _LightShadowRampColor;
     // outline
     float   _OutlineWidth;
+     float   _OutlinePaintedWidth;
     half3   _OutlineColor;
+        float   _OutlinePaintedColor;
+        float _OutlineOriginalSurfaceColorMixer;
     float   _OutlineZOffset;
     float   _OutlineZOffsetMaskRemapStart;
     float   _OutlineZOffsetMaskRemapEnd;
+    float _OutlineForTangentOrNormal;
       // auto
     float _ShadowAutoAdjustByLight;
     // faceshadow
@@ -254,15 +261,18 @@ VaryingsRim DepthVertexWork(Attributes input)
     output.normalWS = normalInput.normalWS;
     output.positionWS = vertexInput.positionWS;
     output.positionNDC = vertexInput.positionNDC;
+    output.uv = input.uv;
     return output;
 }
 
-float3 TransformPositionWSToOutlinePositionWS(float3 positionWS, float positionVS_Z, float3 normalWS)
+float3 TransformPositionWSToOutlinePositionWS(float3 positionWS, float positionVS_Z, float3 normalWS,float vertalpha = 1)
 {
     //you can replace it to your own method! Here we will write a simple world space method for tutorial reason, it is not the best method!
  
     // Question : This Out-line method did not do well when used both surface of character.
-    float outlineExpandAmount = _OutlineWidth * GetOutlineCameraFovAndDistanceFixMultiplier(positionVS_Z);
+   // float3 viewDirectionWS = SafeNormalize(GetCameraPositionWS() - positionWS);
+    //float outwidth = saturate( abs (dot(viewDirectionWS , normalWS)));
+    float outlineExpandAmount = _OutlineWidth  * lerp (1,vertalpha,_OutlinePaintedWidth)*GetOutlineCameraFovAndDistanceFixMultiplier(positionVS_Z);
     float3 result = positionWS + normalWS * outlineExpandAmount; 
     return result;
 }
@@ -274,7 +284,7 @@ Varyings VertexShaderWork(Attributes input)
     Varyings output;
 
     output.tangentWS = normalize(TransformObjectToWorldDir(input.tangentOS.xyz)); 
-
+     output.normalWS = normalize(TransformObjectToWorldDir(input.normalOS.xyz)); 
     VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS);
 
     // Similar to VertexPositionInputs, VertexNormalInputs will contain normal, tangent and bitangent
@@ -284,7 +294,10 @@ Varyings VertexShaderWork(Attributes input)
     float3 positionWS = vertexInput.positionWS;
 
 #ifdef ToonShaderIsOutline
-    positionWS = TransformPositionWSToOutlinePositionWS(vertexInput.positionWS, vertexInput.positionVS.z,   output.tangentWS);
+    
+ 
+    output.vertColor = input.vertColor;
+       positionWS = TransformPositionWSToOutlinePositionWS(vertexInput.positionWS, vertexInput.positionVS.z, lerp(output.normalWS,output.tangentWS,_OutlineForTangentOrNormal),  output.vertColor.a);
 #endif
 
     // Computes fog factor per-vertex.
@@ -403,13 +416,13 @@ ToonSurfaceData InitializeSurfaceData(Varyings input)
     ToonSurfaceData output;
 
     // albedo & alpha
-    half3 alphaBW = tex2D(_AlphaTexture,input.uv).rgb;
+    half4 alphaBW = tex2D(_AlphaTexture,input.uv).rgba;
     
     float4 baseColorFinal = GetFinalBaseColor(input);
     output.albedo = baseColorFinal.rgb;
     output.alpha = baseColorFinal.a;
 #if _WithTextureSample
-   DoClipTestToTargetAlphaValue(alphaBW.r);// early exit if possible
+   DoClipTestToTargetAlphaValue(alphaBW.a);// early exit if possible
 #else
     DoClipTestToTargetAlphaValue(output.alpha);
 #endif
@@ -536,7 +549,7 @@ half3 ShadeAllLights(ToonSurfaceData surfaceData, LightingData lightingData)
 
 half3 ConvertSurfaceColorToOutlineColor(half3 originalSurfaceColor)
 {
-    return originalSurfaceColor * _OutlineColor;
+    return  lerp (1,originalSurfaceColor,_OutlineOriginalSurfaceColorMixer)*_OutlineColor;
 }
 half3 ApplyFog(half3 color, Varyings input)
 {
@@ -565,8 +578,11 @@ half4 ShadeFinalColor(Varyings input) : SV_TARGET
     // apply all lighting calculation
     half3 color = ShadeAllLights(surfaceData, lightingData) ;
 
+
 #ifdef ToonShaderIsOutline
-    color = ConvertSurfaceColorToOutlineColor(color);
+    float3 vertColor = input.vertColor;
+    color = ConvertSurfaceColorToOutlineColor(color) * lerp (1,vertColor,_OutlinePaintedColor);
+
 #endif
 
     color = ApplyFog(color, input);
@@ -590,14 +606,15 @@ float4 RimLightFixed(VaryingsRim input) : SV_TARGET{
         float depthDiff = linearEyeOffsetDepth - linearEyeDepth;
         float rimIntensity = step(_Threshold, depthDiff ) *2 ;
         
+        float4 AlphaInfo = tex2D(_BaseMap, input.uv) * _BaseColor;
         
 
         Light mainLight = GetMainLight();
         float rimRatio = 1 - saturate(dot(viewDirectionWS, input.normalWS));
         rimRatio = pow(rimRatio, exp2(lerp(_FresnelMin, 0.0, _FresnelMask)));
-        rimIntensity = lerp(0, rimIntensity, rimRatio);
+        rimIntensity = lerp(0, rimIntensity, rimRatio) * (AlphaInfo.a - _Cutoff > 0 ? AlphaInfo.a : 0) ;
         
-        return rimIntensity *_RimColor * _ShadowAutoAdjustByLight;
+        return  _RimScale* rimIntensity *_RimColor * _ShadowAutoAdjustByLight;
     #else
         return 0;
     #endif
